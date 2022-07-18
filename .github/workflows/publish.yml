@@ -1,0 +1,38 @@
+name: publish
+
+
+env:
+  HELM_DOCS_VERSION: "1.7.0"
+
+on:
+  push:
+    branch:
+    - 'master'
+    - 'helm-*'
+
+jobs:
+  chart-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
+      - name: install helm-docs
+        run: |
+          cd /tmp
+    
+          wget https://github.com/norwoodj/helm-docs/releases/download/v${{env.HELM_DOCS_VERSION}}/helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
+          tar -xvf helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
+          sudo mv helm-docs /usr/local/sbin
+
+      - name: run helm-docs
+        run: |
+          helm-docs -t README.md.gotmpl -o README.md
+
+      - name: Run chart-releaser
+        uses: ./.github/actions/chart-releaser-action
+        env:
+          CR_TOKEN: ${{ secrets.CR_TOKEN }}
+          
